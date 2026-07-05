@@ -94,6 +94,8 @@ Documentation Swagger : [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 ---
 
 ## Structure du projet
+
+```
 research-lab-agents/
 ├── app/
 │   ├── agents/
@@ -111,13 +113,7 @@ research-lab-agents/
 │   ├── database.py             # Connexion SQLAlchemy async + session + Base
 │   ├── main.py                 # Point d'entrée FastAPI + lifespan
 │   └── state.py                # Instance partagée du MISAgent
-├── docker-compose.yml          # PostgreSQL 16 + volume persistant
-├── requirements.txt
-├── test_base_agent.py
-├── test_event_bus.py
-└── README.md
----
-
+├──
 ## API — Endpoints disponibles
 
 ### Projets
