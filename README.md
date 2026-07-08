@@ -104,6 +104,8 @@ Documentation Swagger : http://127.0.0.1:8000/docs
 ---
 
 ## Structure du projet
+
+```
 research-lab-agents/
 ├── app/
 │   ├── agents/
@@ -133,6 +135,7 @@ research-lab-agents/
 ├── test_base_agent.py
 ├── test_event_bus.py
 └── README.md
+```
 ---
 
 ## API — Endpoints disponibles
