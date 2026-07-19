@@ -1,15 +1,14 @@
 from __future__ import annotations
-
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-
-from app.schemas.qualite import RapportQualite, DemandeValidation
+from app.schemas.qualite import RapportQualite, DemandeValidation, EvaluationIA
 from app.schemas.events import Event
 from app.models.mis import Projet as ProjetModel, Personnel as PersonnelModel
 from app.models.mis import Equipement as EquipementModel, Budget as BudgetModel
 from app.database import get_db
 from app.state import qualite_agent
+from app.services.llm_client import evaluer_projet
 
 router = APIRouter(prefix="/qualite", tags=["Qualité"])
 
@@ -94,3 +93,8 @@ async def valider_via_event(demande: DemandeValidation) -> RapportQualite:
     if not rapports:
         raise HTTPException(status_code=404, detail="Entité introuvable ou validation échouée")
     return rapports[-1]
+
+
+@router.post("/evaluation-ia", response_model=EvaluationIA)
+async def evaluer_projet_ia(projet_data: dict) -> EvaluationIA:
+    return evaluer_projet(projet_data)

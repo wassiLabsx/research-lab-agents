@@ -26,6 +26,7 @@ Le système est composé de trois agents principaux :
 - **Docker Desktop** — conteneurisation de la base de données
 - **Pydantic v2** — validation des schémas API
 - **python-dotenv** — gestion des variables d'environnement
+- **Mistral AI SDK** — évaluation qualité par LLM (agent Qualité)
 
 ---
 
@@ -34,6 +35,7 @@ Le système est composé de trois agents principaux :
 - Python 3.13+
 - Docker Desktop (en cours d'exécution)
 - Git
+- Clé API Mistral (gratuite sur console.mistral.ai)
 
 ---
 
@@ -71,6 +73,7 @@ DATABASE_URL=postgresql+asyncpg://mis_user:mis_password@localhost:5432/mis_db
 POSTGRES_USER=mis_user
 POSTGRES_PASSWORD=mis_password
 POSTGRES_DB=mis_db
+MISTRAL_API_KEY=ta_clé_mistral
 > Ce fichier n'est pas versionné (listé dans `.gitignore`).
 
 ### 5. Lancer PostgreSQL via Docker
@@ -126,6 +129,8 @@ research-lab-agents/
 │   │   ├── mis.py                    # Schémas : Projet, Personnel, Equipement, Budget
 │   │   ├── orchestrateur.py          # Schémas : Alerte, HistoriqueEvenement
 │   │   └── qualite.py                # Schémas : RapportQualite, DemandeValidation
+│   ├── services/
+│   │   └── llm_client.py            # Client Mistral pour évaluation IA
 │   ├── database.py                   # Connexion SQLAlchemy async + session + Base
 │   ├── main.py                       # Point d'entrée FastAPI + lifespan
 │   └── state.py                      # Instances partagées des 3 agents
@@ -133,6 +138,9 @@ research-lab-agents/
 ├── docker-compose.yml                # PostgreSQL 16 + volume persistant
 ├── requirements.txt
 ├── test_base_agent.py
+├── scripts_dev/
+│   ├── test_mistral.py
+│   └── test_llm_client.py
 ├── test_event_bus.py
 └── README.md
 ```
@@ -196,6 +204,7 @@ research-lab-agents/
 | `POST` | `/qualite/valider/equipement/{id}` | Valider un équipement |
 | `POST` | `/qualite/valider/budget/{id}` | Valider un budget |
 | `POST` | `/qualite/valider` | Valider via EventBus |
+| `POST` | `/qualite/evaluation-ia` | Évaluation qualité par IA (Mistral) |
 
 ---
 
@@ -234,6 +243,7 @@ await event_bus.publish(Event(
 - Phase 2 — PostgreSQL : migration vers une vraie base de données persistante — Complet
 - Phase 3 — Orchestrateur : 15 règles métier, alertes, historique — Complet
 - Phase 4 — Agent Qualité : validation RGPD, variables d'environnement — Complet
+- Phase 5 — Intégration LLM : évaluation qualité par IA via Mistral API, sortie JSON structurée — Complet (mode standalone, branchement PostgreSQL en cours)
 
 ---
 

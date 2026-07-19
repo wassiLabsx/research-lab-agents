@@ -17,3 +17,13 @@ class RapportQualite(BaseModel):
 class DemandeValidation(BaseModel):
     entite_type: Literal["projet", "personnel", "equipement", "budget"]
     entite_id: str
+
+    
+class EvaluationIA(BaseModel):
+    projet_id: str
+    forces: list[str]
+    faiblesses: list[str]
+    risques: list[str]
+    niveau_risque: Literal["faible", "modere", "eleve", "critique"]
+    recommandation: str
+    resume: str
