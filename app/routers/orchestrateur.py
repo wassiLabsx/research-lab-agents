@@ -2,6 +2,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from app.schemas.events import Event
 from app.state import orchestrator_agent
+from app.schemas.orchestrateur import DecisionRoutageIA
 
 router = APIRouter(prefix="/orchestrateur", tags=["Orchestrateur"])
 @router.get("/status")
@@ -20,6 +21,12 @@ def get_alertes(resolues: bool = False) -> list:
 @router.get("/historique")
 def get_historique() -> list:
     return orchestrator_agent.get_historique()
+
+
+@router.get("/decisions-ia", response_model=list[DecisionRoutageIA])
+def get_decisions_ia() -> list[DecisionRoutageIA]:
+    return orchestrator_agent.get_decisions_ia()
+
 
 
 @router.post("/trigger")

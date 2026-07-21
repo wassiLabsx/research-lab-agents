@@ -22,3 +22,11 @@ class HistoriqueEvenement(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     traite: bool = True
     alertes_generees: list[str] = Field(default_factory=list)
+
+
+class DecisionRoutageIA(BaseModel):
+    type_evenement: str
+    agent_ou_action_recommande: str
+    niveau_urgence: NiveauAlerte
+    justification: str
+    necessite_intervention_humaine: bool

@@ -130,7 +130,7 @@ research-lab-agents/
 │   │   ├── orchestrateur.py          # Schémas : Alerte, HistoriqueEvenement
 │   │   └── qualite.py                # Schémas : RapportQualite, DemandeValidation
 │   ├── services/
-│   │   └── llm_client.py            # Client Mistral pour évaluation IA
+│   │   └── llm_client.py            # Client Mistral : évaluation IA + décisions de routage
 │   ├── database.py                   # Connexion SQLAlchemy async + session + Base
 │   ├── main.py                       # Point d'entrée FastAPI + lifespan
 │   └── state.py                      # Instances partagées des 3 agents
@@ -190,6 +190,7 @@ research-lab-agents/
 | `GET` | `/orchestrateur/status` | Statut + stats de l'agent |
 | `GET` | `/orchestrateur/alertes` | Liste des alertes actives/résolues |
 | `GET` | `/orchestrateur/historique` | Historique des événements traités |
+| `GET` | `/orchestrateur/decisions-ia` | Décisions de routage IA (fallback Mistral) |
 | `POST` | `/orchestrateur/trigger` | Déclencher manuellement un événement |
 | `PATCH` | `/orchestrateur/alertes/{id}/resoudre` | Résoudre une alerte |
 
@@ -244,6 +245,7 @@ await event_bus.publish(Event(
 - Phase 3 — Orchestrateur : 15 règles métier, alertes, historique — Complet
 - Phase 4 — Agent Qualité : validation RGPD, variables d'environnement — Complet
 - Phase 5 — Intégration LLM : évaluation qualité par IA via Mistral API, sortie JSON structurée — Complet (mode standalone, branchement PostgreSQL en cours)
+- Phase 6 — Fallback IA Orchestrateur : décision de routage par LLM pour les événements hors des 15 règles connues, avec liste fermée d'agents et double vérification anti-hallucination — Complet
 
 ---
 

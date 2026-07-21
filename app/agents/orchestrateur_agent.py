@@ -3,13 +3,15 @@ from datetime import datetime
 from app.core.base_agent import BaseAgent
 from app.core.event_bus import EventBus
 from app.schemas.events import Event
-from app.schemas.orchestrateur import Alerte, HistoriqueEvenement
+from app.services.llm_client import decider_routage_ia
+from app.schemas.orchestrateur import Alerte, HistoriqueEvenement, DecisionRoutageIA
 
 class OrchestratorAgent(BaseAgent):
     def __init__(self, name: str, event_bus: EventBus) -> None:
         super().__init__(name, event_bus)
         self._alertes: list[Alerte] = []
         self._historique: list[HistoriqueEvenement] = []
+        self._decisions_ia: list[DecisionRoutageIA] = []
 
         # Table de routage : type d'événement → liste de handlers
         self._regles: dict[str, list] = {
@@ -52,11 +54,17 @@ class OrchestratorAgent(BaseAgent):
 
         # Appel de tous les handlers associés à ce type d'événement
         handlers = self._regles.get(event.type, [])
-        for handler in handlers:
-            alerte = await handler(event)
-            if alerte:
-                self._alertes.append(alerte)
-                alertes_ids.append(alerte.id)
+
+        if not handlers:
+            decision = decider_routage_ia(event.type, event.source_agent, event.payload)
+            self._decisions_ia.append(decision)
+            print(f"[{self.name}] Aucune règle connue — décision IA : {decision.agent_ou_action_recommande} (urgence: {decision.niveau_urgence})")
+        else:
+            for handler in handlers:
+                alerte = await handler(event)
+                if alerte:
+                    self._alertes.append(alerte)
+                    alertes_ids.append(alerte.id)
 
         # Log dans l'historique
         self._historique.append(HistoriqueEvenement(
@@ -212,6 +220,10 @@ class OrchestratorAgent(BaseAgent):
 
     def get_historique(self) -> list[HistoriqueEvenement]:
         return self._historique
+    
+    def get_decisions_ia(self) -> list[DecisionRoutageIA]:
+        return self._decisions_ia
+
 
     def resoudre_alerte(self, alerte_id: str) -> bool:
         for alerte in self._alertes:
@@ -226,4 +238,5 @@ class OrchestratorAgent(BaseAgent):
             "alertes_actives": len(self.get_alertes(resolues=False)),
             "alertes_resolues": len(self.get_alertes(resolues=True)),
             "regles_actives": len(self._regles),
+            "decisions_ia": len(self._decisions_ia),
         }
