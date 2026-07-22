@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from collections import defaultdict 
 from typing import Awaitable, Callable
 from app.schemas.events import Event 
+import asyncio
+from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
 
 EventHandler = Callable[[Event], Awaitable[None]]
 
@@ -33,5 +35,42 @@ class InMemoryEventBus(EventBus):
     
     async def subscribe(self,stream:str,handler:EventHandler)->None:
         self._subscribers[stream].append(handler)
+
+
+class KafkaEventBus(EventBus):
+    def __init__(self, bootstrap_servers: str = "localhost:9092") -> None:
+        self._bootstrap_servers = bootstrap_servers
+        self._producer: AIOKafkaProducer | None = None
+        self._tasks: list[asyncio.Task] = []
     
+    async def _get_producer(self) -> AIOKafkaProducer:
+        if self._producer is None:
+            self._producer = AIOKafkaProducer(bootstrap_servers=self._bootstrap_servers)
+            await self._producer.start()
+        return self._producer
+
+    async def publish(self, stream: str, event: Event) -> str:
+        producer = await self._get_producer()
+        message = event.model_dump_json().encode("utf-8")
+        await producer.send_and_wait(stream, message)
+        return event.id
+    
+    async def _consommer(self, stream: str, handler: EventHandler) -> None:
+        consumer = AIOKafkaConsumer(
+            stream,
+            bootstrap_servers=self._bootstrap_servers,
+            auto_offset_reset="latest",
+            group_id=f"{stream}-group"
+        )
+        await consumer.start()
+        try:
+            async for message in consumer:
+                event = Event.model_validate_json(message.value.decode("utf-8"))
+                await handler(event)
+        finally:
+            await consumer.stop()
+
+    async def subscribe(self, stream: str, handler: EventHandler) -> None:
+        task = asyncio.create_task(self._consommer(stream, handler))
+        self._tasks.append(task)
 

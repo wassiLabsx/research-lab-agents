@@ -27,6 +27,7 @@ Le système est composé de trois agents principaux :
 - **Pydantic v2** — validation des schémas API
 - **python-dotenv** — gestion des variables d'environnement
 - **Mistral AI SDK** — évaluation qualité par LLM (agent Qualité)
+- **Apache Kafka** — bus d'événements distribué (implémentation alternative de l'EventBus)
 
 ---
 
@@ -36,6 +37,7 @@ Le système est composé de trois agents principaux :
 - Docker Desktop (en cours d'exécution)
 - Git
 - Clé API Mistral (gratuite sur console.mistral.ai)
+- Docker doit avoir assez de ressources pour Kafka en plus de PostgreSQL (RAM recommandée : 4 Go+)
 
 ---
 
@@ -74,6 +76,7 @@ POSTGRES_USER=mis_user
 POSTGRES_PASSWORD=mis_password
 POSTGRES_DB=mis_db
 MISTRAL_API_KEY=ta_clé_mistral
+EVENT_BUS_TYPE=memory
 > Ce fichier n'est pas versionné (listé dans `.gitignore`).
 
 ### 5. Lancer PostgreSQL via Docker
@@ -117,7 +120,7 @@ research-lab-agents/
 │   │   └── qualite_agent.py          # Agent Qualité (validation + RGPD)
 │   ├── core/
 │   │   ├── base_agent.py             # Classe abstraite BaseAgent
-│   │   └── event_bus.py              # EventBus + InMemoryEventBus
+│   │   └── event_bus.py              # EventBus (interface) + InMemoryEventBus + KafkaEventBus
 │   ├── models/
 │   │   └── mis.py                    # Modèles SQLAlchemy (tables SQL)
 │   ├── routers/
@@ -246,8 +249,22 @@ await event_bus.publish(Event(
 - Phase 4 — Agent Qualité : validation RGPD, variables d'environnement — Complet
 - Phase 5 — Intégration LLM : évaluation qualité par IA via Mistral API, sortie JSON structurée — Complet (mode standalone, branchement PostgreSQL en cours)
 - Phase 6 — Fallback IA Orchestrateur : décision de routage par LLM pour les événements hors des 15 règles connues, avec liste fermée d'agents et double vérification anti-hallucination — Complet
-
+- Phase 7 — EventBus Kafka : implémentation KafkaEventBus interchangeable avec InMemoryEventBus via configuration (.env), infrastructure Docker en mode KRaft — Complet
 ---
+## Bus d'événements (EventBus)
+
+Le système supporte deux implémentations interchangeables de l'`EventBus`, sélectionnables via la variable `EVENT_BUS_TYPE` dans `.env` :
+
+| Valeur | Implémentation | Usage recommandé |
+|---|---|---|
+| `memory` (défaut) | `InMemoryEventBus` | Développement local, tests rapides, démonstration |
+| `kafka` | `KafkaEventBus` | Architecture distribuée, persistance des événements |
+
+Les deux implémentations respectent la même interface abstraite (`publish`, `subscribe`), donc aucun agent ne nécessite de modification lors du changement d'implémentation.
+
+Le service Kafka est disponible via Docker (mode KRaft, sans Zookeeper) sur le port `9092`.
+
+--- 
 
 ## Base de données
 
